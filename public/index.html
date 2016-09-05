@@ -3,16 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <title>Excel Javascript</title>
+    <link rel="stylesheet" type="text/css" href="../lib/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="../lib/bootstrap/dist/css/bootstrap.min.css.map"/>
+
+    <script lang="javascript" src="../lib/jquery/dist/jquery.min.js"></script>
+    <script lang="javascript" src="../lib/bootstrap/dist/js/bootstrap.min.js"></script>
     <script lang="javascript" src="../lib/angular/angular.min.js"></script>
-    <!--<script lang="javascript" src="../lib/jquery/dist/jquery.min.js"></script>-->
     <script lang="javascript" src="../lib/js-xlsx/dist/xlsx.core.min.js"></script>
     <script lang="javascript" src="script.js"></script>
 </head>
 <body ng-app="ExcelParser" ng-controller="MainCtrl">
-    <!--<input type="file" id="file-uploaded" ng-model="fileSelected" ng-change="loadFile()"/>-->
-    <!--<span ng-click="loadFile()">Submit</span>-->
-    <span ng-click="loadFile()">Show Sheet Names</span>
-    <div ng-repeat="sheet in sheet_name_list">{{sheet}}</div>
-    <div ng-bind-html="welcome | to_trusted"></div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-5 col-lg-offset-1" ng-init="loadFile()">
+                <label for="sample">Choose Sample Number: </label>
+                <select name="sample" ng-model="selectedSample" ng-change="loadHouseDetails()"
+                        ng-options="idx as ('House ' + idx) for (idx, choice) in houseDetails">
+                    <option value="">----Please select a sample---</option>
+                </select>
+            </div>
+            <div class="col-lg-5">
+                <span class="btn" ng-class="{'summer': 'btn-success', 'winter': 'btn-default'}[currentCycle]" ng-click="changeCycle('summer')">Summer</span>
+                <span class="btn" ng-class="{'winter': 'btn-success', 'summer': 'btn-default'}[currentCycle]" ng-click="changeCycle('winter')">Winter</span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <table class="table table-bordered table-striped">
+                    <caption>House Sample Details</caption>
+                    <tbody>
+                        <tr ng-repeat="fields in houseDetailsFields">
+                            <td><strong>{{fields.display}}</strong></td>
+                            <td>{{currentHouseDetails[fields.id]}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="table table-bordered table-striped">
+                    <caption>Appliance List for Summer</caption>
+                    <thead>
+                        <th>Appliance</th>
+                        <th>Usage (Hrs)</th>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="appliance in currentApplianceList">
+                            <td ng-repeat-start="(key, value) in appliance">{{key}}</td>
+                            <td ng-repeat-end>{{value}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-lg-6">
+                <table class="table table-bordered table-striped">
+                    <caption>Global Datapoints</caption>
+                    <tbody>
+                        <tr ng-repeat="fields in globalDetailsFields">
+                            <td><strong>{{fields.display}}</strong></td>
+                            <td>{{fields.value}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <table class="table table-bordered table-striped">
+                    <caption>Sample Datapoints</caption>
+                    <tbody>
+                        <tr ng-repeat="fields in sampleDetailsFields">
+                            <td><strong>{{fields.display}}</strong></td>
+                            <td>{{fields.value}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
 </body>
 </html>
