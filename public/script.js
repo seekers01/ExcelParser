@@ -18,7 +18,6 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
         $scope.sampleDetailsFields = Service.sampleDetailsFields;
 
         $scope.loadFile = function () {
-            console.log($scope.fileSelected);
 
             /* set up XMLHttpRequest */
             var url = "HHM-V6.xlsx";
@@ -40,7 +39,6 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
                 //console.log(workbook);
 
                 $scope.sheet_name_list = $scope.workbook.SheetNames;
-                console.log($scope.sheet_name_list);
                 $scope.welcome = "Hello Again";
                 $scope.init();
                 Service.safeApply($scope);
@@ -149,7 +147,7 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
                 }
                 $scope.houseConsSummer[i] = sumTotal;
             }
-            console.log(summerRows);
+            //console.log(summerRows);
         };
 
         $scope.calcWinter = function () {
@@ -185,7 +183,7 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
                 }
                 $scope.houseConsWinter[i] = sumTotal;
             }
-            console.log(winterRows);
+            //console.log(winterRows);
         };
     }
 ]);
