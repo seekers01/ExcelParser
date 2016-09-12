@@ -1,6 +1,6 @@
 'use strict';
 
-var ExcelParser = angular.module('ExcelParser', []);
+var ExcelParser = angular.module('ExcelParser', ['zingchart-angularjs']);
 
 ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
     function ($scope, Service) {
@@ -57,8 +57,8 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
             oReq.send();
         };
 
-        $scope.changeCycle = function(cycle){
-            switch (cycle){
+        $scope.changeCycle = function (cycle) {
+            switch (cycle) {
                 case 'summer':
                     $scope.currentCycle = cycle;
                     $scope.currentApplianceList = $scope.houseApplianceSummer[$scope.selectedSample];
@@ -82,12 +82,13 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
             $scope.globalStats();
             $scope.currentCycle = 'summer';
             $scope.currentApplianceList = $scope.houseApplianceSummer[$scope.selectedSample];
+            $scope.populateDataForDeviceChart();
             $scope.sampleDetailsFields.totalSummer.value = $scope.houseConsSummer[$scope.selectedSample];
-            $scope.sampleDetailsFields.avgSummer.value = $scope.houseConsSummer[$scope.selectedSample]/$scope.houseApplianceSummer[$scope.selectedSample].length;
+            $scope.sampleDetailsFields.avgSummer.value = $scope.houseConsSummer[$scope.selectedSample] / $scope.houseApplianceSummer[$scope.selectedSample].length;
             $scope.sampleDetailsFields.totalWinter.value = $scope.houseConsWinter[$scope.selectedSample];
-            $scope.sampleDetailsFields.avgWinter.value = $scope.houseConsWinter[$scope.selectedSample]/$scope.houseApplianceWinter[$scope.selectedSample].length;
+            $scope.sampleDetailsFields.avgWinter.value = $scope.houseConsWinter[$scope.selectedSample] / $scope.houseApplianceWinter[$scope.selectedSample].length;
             $scope.sampleDetailsFields.totalCombined.value = $scope.sampleDetailsFields.totalSummer.value + $scope.sampleDetailsFields.totalWinter.value;
-            $scope.sampleDetailsFields.avgCombined.value = $scope.sampleDetailsFields.totalCombined.value/ ($scope.houseApplianceSummer[$scope.selectedSample].length + $scope.houseApplianceWinter[$scope.selectedSample].length);
+            $scope.sampleDetailsFields.avgCombined.value = $scope.sampleDetailsFields.totalCombined.value / ($scope.houseApplianceSummer[$scope.selectedSample].length + $scope.houseApplianceWinter[$scope.selectedSample].length);
         };
 
         $scope.globalStats = function () {
@@ -100,15 +101,15 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
             $scope.globalDetailsFields.maxHouseTotal.value = $scope.houseConsSummer[0] + $scope.houseConsWinter[0];
             $scope.globalDetailsFields.minHouseId.value = 0;
             $scope.globalDetailsFields.minHouseTotal.value = $scope.houseConsSummer[0] + $scope.houseConsWinter[0];
-            for(var i=1; i<$scope.houseDetails.length; i++){
+            for (var i = 1; i < $scope.houseDetails.length; i++) {
                 var temp = $scope.houseConsSummer[i] + $scope.houseConsWinter[i];
                 $scope.globalDetailsFields.totalSummer.value += $scope.houseConsSummer[i];
                 $scope.globalDetailsFields.totalWinter.value += $scope.houseConsWinter[i];
-                if(temp < $scope.globalDetailsFields.minHouseTotal.value){
+                if (temp < $scope.globalDetailsFields.minHouseTotal.value) {
                     $scope.globalDetailsFields.minHouseId.value = i;
                     $scope.globalDetailsFields.minHouseTotal.value = temp;
                 }
-                if(temp > $scope.globalDetailsFields.maxHouseTotal.value){
+                if (temp > $scope.globalDetailsFields.maxHouseTotal.value) {
                     $scope.globalDetailsFields.maxHouseId.value = i;
                     $scope.globalDetailsFields.maxHouseTotal.value = temp;
                 }
@@ -119,10 +120,10 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
             var consSummerTop = 3, avgPowerColPrefix = 'D', devNameColPrefix = 'A';
             $scope.summerDeviceAvg = {};
 
-            for(var i=consSummerTop;;i++){
-                var avgPower = $scope.workbook.Sheets["Consumption summer"][avgPowerColPrefix+ i];
+            for (var i = consSummerTop; ; i++) {
+                var avgPower = $scope.workbook.Sheets["Consumption summer"][avgPowerColPrefix + i];
                 var devName = $scope.workbook.Sheets["Consumption summer"][devNameColPrefix + i];
-                if(devName === undefined && avgPower === undefined) break;
+                if (devName === undefined && avgPower === undefined) break;
                 devName = devName === undefined ? "NA" : devName.v;
                 avgPower = avgPower === undefined ? 0 : avgPower.w;
                 var tempObj = {};
@@ -130,15 +131,16 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
                 angular.extend($scope.summerDeviceAvg, tempObj);
             }
 
+            // Appliance Ownership data not used
             var sheetName = "HHS appliances  Time of use S";
             var summerRows = XLSX.utils.sheet_to_json($scope.workbook.Sheets[sheetName]);
-            for(var i=0; i<$scope.houseDetails.length; i++){
+            for (var i = 0; i < $scope.houseDetails.length; i++) {
                 //$scope.houseConsSummer[i]
                 var currentRow = summerRows[i];
                 var sumTotal = 0;
                 $scope.houseApplianceSummer[i] = [];
-                for(var appliance in currentRow) {
-                    if(currentRow[appliance] > 0 && $scope.summerDeviceAvg[appliance] !== undefined){
+                for (var appliance in currentRow) {
+                    if (currentRow[appliance] > 0 && $scope.summerDeviceAvg[appliance] !== undefined) {
                         sumTotal += currentRow[appliance] * $scope.summerDeviceAvg[appliance];
                         var tempObj = {};
                         tempObj[appliance] = currentRow[appliance];
@@ -155,10 +157,10 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
             var consWinterTop = 3, avgPowerColPrefix = 'D', devNameColPrefix = 'A';
             $scope.winterDeviceAvg = {};
 
-            for(var i=consWinterTop;;i++){
-                var avgPower = $scope.workbook.Sheets["Consumption winter"][avgPowerColPrefix+ i];
+            for (var i = consWinterTop; ; i++) {
+                var avgPower = $scope.workbook.Sheets["Consumption winter"][avgPowerColPrefix + i];
                 var devName = $scope.workbook.Sheets["Consumption winter"][devNameColPrefix + i];
-                if(devName === undefined && avgPower === undefined) break;
+                if (devName === undefined && avgPower === undefined) break;
                 devName = devName === undefined ? "NA" : devName.v;
                 avgPower = avgPower === undefined ? 0 : avgPower.w;
                 var tempObj = {};
@@ -168,13 +170,13 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
 
             var sheetName = "HHS appliances time of use W";
             var winterRows = XLSX.utils.sheet_to_json($scope.workbook.Sheets[sheetName]);
-            for(var i=0; i<$scope.houseDetails.length; i++){
+            for (var i = 0; i < $scope.houseDetails.length; i++) {
                 //$scope.houseConsSummer[i]
                 var currentRow = winterRows[i];
                 var sumTotal = 0;
                 $scope.houseApplianceWinter[i] = [];
-                for(var appliance in currentRow) {
-                    if(currentRow[appliance] > 0 && $scope.winterDeviceAvg[appliance] !== undefined){
+                for (var appliance in currentRow) {
+                    if (currentRow[appliance] > 0 && $scope.winterDeviceAvg[appliance] !== undefined) {
                         sumTotal += currentRow[appliance] * $scope.winterDeviceAvg[appliance];
                         var tempObj = {};
                         tempObj[appliance] = currentRow[appliance];
@@ -185,6 +187,33 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
             }
             //console.log(winterRows);
         };
+
+        $scope.populateDataForDeviceChart = function () {
+            $scope.deviceChartData = {};
+            $scope.deviceChartData.type = 'pie3d';
+            $scope.deviceChartData.title = {'text': 'Appliance Usage'};
+            $scope.deviceChartData.plot = {
+                "offset-r": "25%" //provide percentage value
+            };
+            //$scope.deviceChartData.legend = {};
+            $scope.deviceChartData.series = [];
+            for (var i in $scope.currentApplianceList) {
+                for (var key in $scope.currentApplianceList[i]) {
+                    var newObj = {"values": $scope.currentApplianceList[i][key], "text": key, "legend-text": key};
+                    $scope.deviceChartData.series.push(newObj);
+                }
+            }
+            console.log($scope.deviceChartData);
+        };
+
+        $scope.populateDataForDeviceHourlyCons = function () {
+
+        };
+
+        $scope.populateDataForDeviceMinuteCons = function () {
+
+        };
+
     }
 ]);
 
