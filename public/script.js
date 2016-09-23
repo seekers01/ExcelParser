@@ -1,6 +1,6 @@
 'use strict';
 
-var ExcelParser = angular.module('ExcelParser', ['zingchart-angularjs']);
+var ExcelParser = angular.module('ExcelParser', ['zingchart-angularjs', 'nvd3ChartDirectives']);
 
 ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
     function ($scope, Service) {
@@ -10,8 +10,12 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
         $scope.houseConsSummer = [];
         $scope.houseConsWinter = [];
         $scope.houseApplianceSummer = [];
+        $scope.houseApplianceUsageSummer = [];
         $scope.houseApplianceWinter = [];
+        $scope.houseApplianceUsageWinter = [];
         $scope.currentCycle = 'summer';
+        $scope.applianceGraph = 'HRS';
+        $scope.deviceChartData = {};
         $scope.workbook = null;
         $scope.houseDetailsFields = Service.houseDetailsFields;
         $scope.globalDetailsFields = Service.globalDetailsFields;
@@ -62,19 +66,25 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
                 case 'summer':
                     $scope.currentCycle = cycle;
                     $scope.currentApplianceList = $scope.houseApplianceSummer[$scope.selectedSample];
+                    $scope.currentApplianceUsage = $scope.houseApplianceUsageSummer[$scope.selectedSample];
                     break;
                 case 'winter':
                     $scope.currentCycle = cycle;
                     $scope.currentApplianceList = $scope.houseApplianceWinter[$scope.selectedSample];
+                    $scope.currentApplianceUsage = $scope.houseApplianceUsageWinter[$scope.selectedSample];
                     break;
                 default:
                     console.log("Invalid cycle.");
             }
+            $scope.populateDataForDeviceChart();
+            $scope.populateDataForPercentUsage();
         };
 
         $scope.init = function () {
             $scope.houseDetails = XLSX.utils.sheet_to_json($scope.workbook.Sheets["House Details"]);
             console.log("There are " + $scope.houseDetails.length + " samples.");
+            $scope.selectedSample = 1;
+            $scope.loadHouseDetails();
         };
 
         $scope.loadHouseDetails = function () {
@@ -82,7 +92,9 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
             $scope.globalStats();
             $scope.currentCycle = 'summer';
             $scope.currentApplianceList = $scope.houseApplianceSummer[$scope.selectedSample];
+            $scope.currentApplianceUsage = $scope.houseApplianceUsageSummer[$scope.selectedSample];
             $scope.populateDataForDeviceChart();
+            $scope.populateDataForPercentUsage();
             $scope.sampleDetailsFields.totalSummer.value = $scope.houseConsSummer[$scope.selectedSample];
             $scope.sampleDetailsFields.avgSummer.value = $scope.houseConsSummer[$scope.selectedSample] / $scope.houseApplianceSummer[$scope.selectedSample].length;
             $scope.sampleDetailsFields.totalWinter.value = $scope.houseConsWinter[$scope.selectedSample];
@@ -139,12 +151,17 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
                 var currentRow = summerRows[i];
                 var sumTotal = 0;
                 $scope.houseApplianceSummer[i] = [];
+                $scope.houseApplianceUsageSummer[i] = [];
                 for (var appliance in currentRow) {
                     if (currentRow[appliance] > 0 && $scope.summerDeviceAvg[appliance] !== undefined) {
-                        sumTotal += currentRow[appliance] * $scope.summerDeviceAvg[appliance];
+                        var tempTotal = currentRow[appliance] * $scope.summerDeviceAvg[appliance];
+                        sumTotal += tempTotal;
                         var tempObj = {};
                         tempObj[appliance] = currentRow[appliance];
                         $scope.houseApplianceSummer[i].push(tempObj);
+                        var tempObj = {};
+                        tempObj[appliance] = tempTotal;
+                        $scope.houseApplianceUsageSummer[i].push(tempObj);
                     }
                 }
                 $scope.houseConsSummer[i] = sumTotal;
@@ -175,12 +192,17 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
                 var currentRow = winterRows[i];
                 var sumTotal = 0;
                 $scope.houseApplianceWinter[i] = [];
+                $scope.houseApplianceUsageWinter[i] = [];
                 for (var appliance in currentRow) {
                     if (currentRow[appliance] > 0 && $scope.winterDeviceAvg[appliance] !== undefined) {
-                        sumTotal += currentRow[appliance] * $scope.winterDeviceAvg[appliance];
+                        var tempTotal = currentRow[appliance] * $scope.winterDeviceAvg[appliance];
+                        sumTotal += tempTotal;
                         var tempObj = {};
                         tempObj[appliance] = currentRow[appliance];
                         $scope.houseApplianceWinter[i].push(tempObj);
+                        var tempObj = {};
+                        tempObj[appliance] = tempTotal;
+                        $scope.houseApplianceUsageWinter[i].push(tempObj);
                     }
                 }
                 $scope.houseConsWinter[i] = sumTotal;
@@ -189,22 +211,47 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
         };
 
         $scope.populateDataForDeviceChart = function () {
-            $scope.deviceChartData = {};
-            $scope.deviceChartData.type = 'pie3d';
-            $scope.deviceChartData.title = {'text': 'Appliance Usage'};
-            $scope.deviceChartData.plot = {
-                "offset-r": "25%" //provide percentage value
-            };
-            //$scope.deviceChartData.legend = {};
-            $scope.deviceChartData.series = [];
+            $scope.deviceChartData.hourSeries = [];
             for (var i in $scope.currentApplianceList) {
                 for (var key in $scope.currentApplianceList[i]) {
-                    var newObj = {"values": $scope.currentApplianceList[i][key], "text": key, "legend-text": key};
-                    $scope.deviceChartData.series.push(newObj);
+                    var newObj = {"key": key, "y": $scope.currentApplianceList[i][key]};
+                    $scope.deviceChartData.hourSeries.push(newObj);
+                }
+            }
+            //console.log($scope.deviceChartData);
+        };
+
+        $scope.populateDataForPercentUsage = function () {
+            $scope.deviceChartData.percentageSeries = [];
+            for (var i in $scope.currentApplianceUsage) {
+                for (var key in $scope.currentApplianceUsage[i]) {
+                    var newObj = {"key": key, "y": $scope.currentApplianceUsage[i][key]};
+                    $scope.deviceChartData.percentageSeries.push(newObj);
                 }
             }
             console.log($scope.deviceChartData);
         };
+
+        $scope.showPercentageGraph = function () {
+            $scope.applianceGraph = 'KWH';
+        };
+
+        $scope.showHoursGraph = function () {
+            $scope.applianceGraph = 'HRS';
+        };
+
+        $scope.xFunction = function () {
+            return function (d) {
+                return d.key;
+            };
+        };
+
+        $scope.yFunction = function () {
+            return function (d) {
+                return d.y;
+            };
+        };
+
 
         $scope.populateDataForDeviceHourlyCons = function () {
 

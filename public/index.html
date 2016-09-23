@@ -10,78 +10,123 @@
     <script lang="javascript" src="../lib/bootstrap/dist/js/bootstrap.min.js"></script>
     <script lang="javascript" src="../lib/angular/angular.min.js"></script>
     <script lang="javascript" src="../lib/js-xlsx/dist/xlsx.core.min.js"></script>
-    <!--<script lang="javascript" src="http://cdn.zingchart.com/zingchart.min.js"></script>-->
-    <!--<script lang="javascript" src="http://cdn.zingchart.com/angular/zingchart-angularjs.js"></script>-->
-    <script lang="javascript" src="../lib/zingchart/zingchart.min.js"></script>
-    <script lang="javascript" src="../lib/zingchart/zingchart-angularjs.js"></script>
+
+    <script src="../lib/d3/d3.js"></script>
+    <script src="../lib/nvd3/nv.d3.js"></script>
+    <script src="../lib/angularjs-nvd3-directives/dist/angularjs-nvd3-directives.js"></script>
+    <link rel="stylesheet" href="../lib/nvd3/nv.d3.css"/>
+
     <script lang="javascript" src="script.js"></script>
+    <link rel="stylesheet" href="style.css"/>
 </head>
-<body ng-app="ExcelParser" ng-controller="MainCtrl">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-lg-5 col-lg-offset-1" ng-init="loadFile()">
-                <label for="sample">Choose Sample Number: </label>
-                <select name="sample" ng-model="selectedSample" ng-change="loadHouseDetails()"
-                        ng-options="idx as ('House ' + idx) for (idx, choice) in houseDetails">
-                    <option value="">----Please select a sample---</option>
-                </select>
-            </div>
-            <div class="col-lg-5">
-                <span class="btn" ng-class="{'summer': 'btn-success', 'winter': 'btn-default'}[currentCycle]" ng-click="changeCycle('summer')">Summer</span>
-                <span class="btn" ng-class="{'winter': 'btn-success', 'summer': 'btn-default'}[currentCycle]" ng-click="changeCycle('winter')">Winter</span>
-            </div>
+<body data-ng-app="ExcelParser" data-ng-controller="MainCtrl">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-5 col-lg-offset-1" data-ng-init="loadFile()">
+            <label for="sample">Choose Sample Number: </label>
+            <select id="sample" name="sample" data-ng-model="selectedSample" data-ng-change="loadHouseDetails()"
+                    data-ng-options="idx as ('House ' + idx) for (idx, choice) in houseDetails">
+                <option value="">----Please select a sample---</option>
+            </select>
         </div>
-        <div class="row">
-            <div class="col-lg-6">
-                <table class="table table-bordered table-striped">
-                    <caption>House Sample Details</caption>
-                    <tbody>
-                        <tr ng-repeat="fields in houseDetailsFields">
-                            <td><strong>{{fields.display}}</strong></td>
-                            <td>{{currentHouseDetails[fields.id]}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="table table-bordered table-striped">
-                    <caption style="text-transform: capitalize;">Appliance List for {{currentCycle}}</caption>
-                    <thead>
-                        <th>Appliance</th>
-                        <th>Usage (Hrs)</th>
-                    </thead>
-                    <tbody>
-                        <tr ng-repeat="appliance in currentApplianceList">
-                            <td ng-repeat-start="(key, value) in appliance">{{key}}</td>
-                            <td ng-repeat-end>{{value}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="col-lg-6">
-                <zingchart id="myChart" zc-json="deviceChartData" zc-height=600 zc-width=600 ng-if="deviceChartData"></zingchart>
-
-                <table class="table table-bordered table-striped">
-                    <caption>Global Datapoints</caption>
-                    <tbody>
-                        <tr ng-repeat="fields in globalDetailsFields">
-                            <td><strong>{{fields.display}}</strong></td>
-                            <td>{{fields.value}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <table class="table table-bordered table-striped">
-                    <caption>Sample Datapoints</caption>
-                    <tbody>
-                        <tr ng-repeat="fields in sampleDetailsFields">
-                            <td><strong>{{fields.display}}</strong></td>
-                            <td>{{fields.value}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
+        <div class="col-lg-5">
+            <span class="btn" data-ng-class="{'summer': 'btn-success', 'winter': 'btn-default'}[currentCycle]"
+                  data-ng-click="changeCycle('summer')">Summer</span>
+            <span class="btn" data-ng-class="{'winter': 'btn-success', 'summer': 'btn-default'}[currentCycle]"
+                  data-ng-click="changeCycle('winter')">Winter</span>
         </div>
     </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <table class="table table-bordered table-striped">
+                <caption>House Sample Details</caption>
+                <tbody>
+                <tr data-ng-repeat="fields in houseDetailsFields">
+                    <td><strong>{{fields.display}}</strong></td>
+                    <td>{{currentHouseDetails[fields.id]}}</td>
+                </tr>
+                </tbody>
+            </table>
+            <table class="table table-bordered table-striped">
+                <caption style="text-transform: capitalize;">Appliance List for {{currentCycle}}</caption>
+                <thead>
+                <tr>
+                    <th>Appliance</th>
+                    <th data-ng-if="applianceGraph=='HRS'">Usage (Hrs)</th>
+                    <th data-ng-if="applianceGraph=='KWH'">Usage (KwH)</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr data-ng-repeat="appliance in currentApplianceList" data-ng-if="applianceGraph=='HRS'">
+                    <td data-ng-repeat-start="(key, value) in appliance">{{key}}</td>
+                    <td data-ng-repeat-end>{{value}}</td>
+                </tr>
+                <tr data-ng-repeat="appliance in currentApplianceUsage" data-ng-if="applianceGraph=='KWH'">
+                    <td data-ng-repeat-start="(key, value) in appliance">{{key}}</td>
+                    <td data-ng-repeat-end>{{value}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="row">
+                <div class="col-lg-12" ng-if="applianceGraph=='HRS'">
+                    <div class="alert alert-success">
+                        Appliance Usage(Hrs)
+                        <u class="cursor pull-right" data-ng-click="showPercentageGraph()">Percentage Usage Graph</u>
+                    </div>
+                    <nvd3-pie-chart
+                            data="deviceChartData.hourSeries"
+                            id="deviceData1"
+                            x="xFunction()"
+                            y="yFunction()"
+                            showLegend="true"
+                            tooltips="true"
+                            showLabels="false">
+                        <svg height="350"></svg>
+                    </nvd3-pie-chart>
+                </div>
+                <div class="col-lg-12" ng-if="applianceGraph=='KWH'">
+                    <div class="alert alert-success">
+                        Appliance Usage(KwH)
+                        <u class="cursor pull-right" data-ng-click="showHoursGraph()">Hour Usage Graph</u>
+                    </div>
+                    <nvd3-pie-chart
+                            data="deviceChartData.percentageSeries"
+                            id="deviceData2"
+                            x="xFunction()"
+                            y="yFunction()"
+                            showLegend="true"
+                            tooltips="true"
+                            showLabels="false">
+                        <svg height="350"></svg>
+                    </nvd3-pie-chart>
+                </div>
+            </div>
+
+            <table class="table table-bordered table-striped">
+                <caption>Global Datapoints</caption>
+                <tbody>
+                <tr data-ng-repeat="fields in globalDetailsFields">
+                    <td><strong>{{fields.display}}</strong></td>
+                    <td>{{fields.value}}</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <table class="table table-bordered table-striped">
+                <caption>Sample Datapoints</caption>
+                <tbody>
+                <tr data-ng-repeat="fields in sampleDetailsFields">
+                    <td><strong>{{fields.display}}</strong></td>
+                    <td>{{fields.value}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
 </body>
 </html>
