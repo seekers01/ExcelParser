@@ -24,7 +24,7 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
         $scope.loadFile = function () {
 
             /* set up XMLHttpRequest */
-            var url = "HHM-V6.xlsx";
+            var url = "HHM-revised.xlsx";
             var oReq = new XMLHttpRequest();
             oReq.open("GET", url, true);
             oReq.responseType = "arraybuffer";
