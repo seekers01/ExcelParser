@@ -1,6 +1,6 @@
 'use strict';
 
-var ExcelParser = angular.module('ExcelParser', ['zingchart-angularjs', 'nvd3ChartDirectives']);
+var ExcelParser = angular.module('ExcelParser', ['nvd3ChartDirectives']);
 
 ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
     function ($scope, Service) {
