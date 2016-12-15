@@ -220,6 +220,7 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
         $scope.loadHouseDetails = function () {
             $scope.currentHouseDetails = $scope.houseDetails[$scope.selectedSample];
             $scope.changeCycle('summer');
+            $scope.calculateSAPCoeff();
             $scope.sampleDetailsFields.totalSummer.value = $scope.powerUsedSummer[$scope.selectedSample];
             $scope.sampleDetailsFields.avgSummer.value = $scope.calcAvgPowerForHouse('summer');
             $scope.sampleDetailsFields.totalWinter.value = $scope.powerUsedWinter[$scope.selectedSample];
@@ -229,6 +230,20 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
             $scope.optionalChanged();
             $scope.populateDataForChart();
             $scope.showHoursGraph();
+        };
+
+        $scope.calculateSAPCoeff = function () {
+            $scope.currentHouseDetails.Ea = 0;
+            $scope.currentHouseDetails.Eb = 0;
+            $scope.currentHouseDetails.tfa = 0;
+            var TFA = Service.TFAData($scope.currentHouseDetails.housesize, $scope.currentHouseDetails.Noppl);
+            var n = parseInt($scope.currentHouseDetails.housesize);
+            var coeff = Math.pow((TFA * n), 0.4714);
+            $scope.currentHouseDetails.tfa = TFA;
+            $scope.currentHouseDetails.Ea = 207.8 * coeff;
+            $scope.currentHouseDetails.Eb = 59.73 * coeff;
+            $scope.currentHouseDetails.Ea = $scope.currentHouseDetails.Ea.toFixed(5);
+            $scope.currentHouseDetails.Eb = $scope.currentHouseDetails.Eb.toFixed(5);
         };
 
         $scope.populateDataForChart = function () {
@@ -332,7 +347,8 @@ ExcelParser.controller('MainCtrl', ['$scope', 'ExcelParserService',
                 $scope.modifySampleDataPoint('deduct');
                 $scope.optionalDevices = [];
             }
-            console.debug($scope.optionalDevices);
+            //console.debug($scope.optionalDevices);
+            $scope.calculateSAPCoeff();
         };
     }
 ]);
@@ -379,6 +395,18 @@ ExcelParser.service('ExcelParserService', [
             {
                 'id': 'statementsapply',
                 'display': 'Statement Apply to You'
+            },
+            {
+                'id': 'tfa',
+                'display': 'TFA(Total Floor Area)'
+            },
+            {
+                'id': 'Ea',
+                'display': 'Ea Coefficient'
+            },
+            {
+                'id': 'Eb',
+                'display': 'Eb Coefficient'
             }
         ];
 
@@ -450,8 +478,31 @@ ExcelParser.service('ExcelParserService', [
             'visible': true
         };
 
+        this.TFAData = function (houseSize, personCount) {
+            if (houseSize == 1 && personCount == 1) {
+                return 37;
+            } else if (houseSize == 1 && personCount == 2) {
+                return 50;
+            } else if (houseSize == 2 && personCount == 3) {
+                return 61;
+            } else if (houseSize == 2 && personCount == 4) {
+                return 70;
+            } else if (houseSize == 3 && personCount == 4) {
+                return 74;
+            } else if (houseSize == 3 && personCount == 5) {
+                return 86;
+            } else if (houseSize == 3 && personCount == 6) {
+                return 95;
+            } else if (houseSize == 4 && personCount == 5) {
+                return 90;
+            } else if (houseSize == 4 && personCount == 6) {
+                return 99;
+            }
+        };
+
     }
-]);
+])
+;
 
 ExcelParser.filter('to_trusted', ['$sce',
     function ($sce) {
